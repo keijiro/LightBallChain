@@ -345,9 +345,12 @@ namespace LightBallChain
 
         void OnRenderObject()
         {
-            // Draw lines with procedural draw.
-            _lineMaterial.SetPass(0);
-            Graphics.DrawProcedural(MeshTopology.Lines, 2 * (_ballCount - 1), 1);
+            if (_lineMaterial != null)
+            {
+                // Draw lines with procedural draw.
+                _lineMaterial.SetPass(0);
+                Graphics.DrawProcedural(MeshTopology.Lines, 2 * (_ballCount - 1), 1);
+            }
         }
 
         #endregion
