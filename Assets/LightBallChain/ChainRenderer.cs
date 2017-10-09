@@ -1,9 +1,10 @@
 ﻿using UnityEngine;
+using UnityEngine.Timeline;
 
 namespace LightBallChain
 {
     [ExecuteInEditMode]
-    public class ChainRenderer : MonoBehaviour
+    public class ChainRenderer : MonoBehaviour, ITimeControl
     {
         #region Editable attributes
 
@@ -39,6 +40,8 @@ namespace LightBallChain
         ComputeBuffer _drawArgsBuffer;
 
         Vector4 [] _positions;
+
+        bool _underTimeControl;
         float _time;
 
         readonly Bounds _bounds = new Bounds(Vector3.zero, Vector3.one * 1000);
@@ -96,8 +99,10 @@ namespace LightBallChain
                 case MotionType.SyncedRandom: SyncedRandom(); break;
             }
 
-            if (Application.isPlaying)
+            if (Application.isPlaying && !_underTimeControl)
                 _time += _frequency * Time.deltaTime;
+            else
+                _time = 0;
         }
 
         #endregion
@@ -223,6 +228,25 @@ namespace LightBallChain
             // Draw lines with procedural draw.
             _lineMaterial.SetPass(0);
             Graphics.DrawProcedural(MeshTopology.Lines, 2 * (_ballCount - 1), 1);
+        }
+
+        #endregion
+
+        #region ITimeControl implementation
+
+        public void OnControlTimeStart()
+        {
+            _underTimeControl = true;
+        }
+
+        public void OnControlTimeStop()
+        {
+            _underTimeControl = false;
+        }
+
+        public void SetTime(double time)
+        {
+            _time = (float)time;
         }
 
         #endregion
