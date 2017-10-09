@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.37311953, g: 0.38074014, b: 0.3587274, a: 1}
+  m_IndirectSpecularColor: {r: 0.12731749, g: 0.13414757, b: 0.1210787, a: 1}
 --- !u!157 &3
 LightmapSettings:
   m_ObjectHideFlags: 0
@@ -136,10 +136,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _motionType: 1
-  _radius: 1
+  _color: {r: 1, g: 1, b: 1, a: 1}
+  _radius: 1.5
   _ballScale: 0.2
   _instanceCount: 18
-  _frequency: 1
+  _frequency: 1.5
   _interval: 1
   _lineShader: {fileID: 4800000, guid: dc155c5ea6358474bbec90df3a33e3fa, type: 3}
   _ballShader: {fileID: 4800000, guid: fc643b925406c08499daaf6162242316, type: 3}

@@ -2,15 +2,20 @@
 
 namespace LightBallChain
 {
+    [ExecuteInEditMode]
     public class ChainRenderer : MonoBehaviour
     {
         #region Editable attributes
 
         enum MotionType { MonoLissajous, SyncedRandom }
-
         [SerializeField] MotionType _motionType;
+
+        [SerializeField, ColorUsage(false, true, 0, 8, 0.125f, 3)]
+        Color _color = Color.white;
+
         [SerializeField] float _radius = 1;
         [SerializeField] float _ballScale = 1;
+
         [SerializeField] int _instanceCount = 10;
         [SerializeField] float _frequency = 1;
         [SerializeField] float _interval = 1;
@@ -73,11 +78,14 @@ namespace LightBallChain
 
         void ReleaseComputeBuffers()
         {
-            _positionBuffer.Release();
-            _drawArgsBuffer.Release();
+            if (_positionBuffer != null)
+            {
+                _positionBuffer.Release();
+                _drawArgsBuffer.Release();
 
-            _positionBuffer = null;
-            _drawArgsBuffer = null;
+                _positionBuffer = null;
+                _drawArgsBuffer = null;
+            }
 
             // To sync the lifetime of _positions to _positionBuffer.
             _positions = null;
@@ -91,7 +99,8 @@ namespace LightBallChain
                 case MotionType.SyncedRandom: SyncedRandom(); break;
             }
 
-            _time += _frequency * Time.deltaTime;
+            if (Application.isPlaying)
+                _time += _frequency * Time.deltaTime;
         }
 
         void MonoLissajous()
@@ -191,6 +200,9 @@ namespace LightBallChain
 
             _lineMaterial.SetMatrix("_Transform", transform.localToWorldMatrix);
             _ballMaterial.SetMatrix("_Transform", transform.localToWorldMatrix);
+
+            _lineMaterial.SetColor("_Color", _color);
+            _ballMaterial.SetColor("_Color", _color);
 
             _lineMaterial.SetFloat("_Radius", _radius);
             _ballMaterial.SetFloat("_Radius", _radius);

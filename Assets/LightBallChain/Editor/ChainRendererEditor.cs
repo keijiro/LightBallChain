@@ -8,6 +8,7 @@ namespace LightBallChain
     public class ChainRendererEditor : Editor
     {
         SerializedProperty _motionType;
+        SerializedProperty _color;
         SerializedProperty _radius;
         SerializedProperty _ballScale;
         SerializedProperty _instanceCount;
@@ -17,6 +18,7 @@ namespace LightBallChain
         void OnEnable()
         {
             _motionType = serializedObject.FindProperty("_motionType");
+            _color = serializedObject.FindProperty("_color");
             _radius = serializedObject.FindProperty("_radius");
             _ballScale = serializedObject.FindProperty("_ballScale");
             _instanceCount = serializedObject.FindProperty("_instanceCount");
@@ -29,6 +31,7 @@ namespace LightBallChain
             serializedObject.Update();
 
             EditorGUILayout.PropertyField(_motionType);
+            EditorGUILayout.PropertyField(_color);
             EditorGUILayout.PropertyField(_radius);
             EditorGUILayout.PropertyField(_ballScale);
             EditorGUILayout.PropertyField(_instanceCount);

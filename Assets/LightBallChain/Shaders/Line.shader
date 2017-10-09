@@ -1,11 +1,17 @@
 ﻿Shader "Hidden/LightBallChain/Line"
 {
+    Properties
+    {
+        [HDR] _Color("", Color) = (1, 1, 1, 1)
+    }
+
     CGINCLUDE
 
     #include "UnityCG.cginc"
 
     StructuredBuffer<float4> _Positions;
     float4x4 _Transform;
+    half4 _Color;
     float _Radius;
 
     float4 Vertex(uint vid : SV_VertexID) : POSITION
@@ -17,7 +23,7 @@
 
     half4 Fragment(float4 position : SV_POSITION) : SV_Target
     {
-        return 1;
+        return _Color;
     }
 
     ENDCG
