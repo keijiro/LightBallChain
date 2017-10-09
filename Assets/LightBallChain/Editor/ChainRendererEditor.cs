@@ -8,22 +8,24 @@ namespace LightBallChain
     public class ChainRendererEditor : Editor
     {
         SerializedProperty _motionType;
-        SerializedProperty _color;
-        SerializedProperty _radius;
-        SerializedProperty _ballScale;
-        SerializedProperty _instanceCount;
         SerializedProperty _frequency;
         SerializedProperty _interval;
+
+        SerializedProperty _radius;
+        SerializedProperty _ballCount;
+        SerializedProperty _ballScale;
+        SerializedProperty _color;
 
         void OnEnable()
         {
             _motionType = serializedObject.FindProperty("_motionType");
-            _color = serializedObject.FindProperty("_color");
-            _radius = serializedObject.FindProperty("_radius");
-            _ballScale = serializedObject.FindProperty("_ballScale");
-            _instanceCount = serializedObject.FindProperty("_instanceCount");
             _frequency = serializedObject.FindProperty("_frequency");
             _interval = serializedObject.FindProperty("_interval");
+
+            _radius = serializedObject.FindProperty("_radius");
+            _ballCount = serializedObject.FindProperty("_ballCount");
+            _ballScale = serializedObject.FindProperty("_ballScale");
+            _color = serializedObject.FindProperty("_color");
         }
 
         public override void OnInspectorGUI()
@@ -31,12 +33,14 @@ namespace LightBallChain
             serializedObject.Update();
 
             EditorGUILayout.PropertyField(_motionType);
-            EditorGUILayout.PropertyField(_color);
-            EditorGUILayout.PropertyField(_radius);
-            EditorGUILayout.PropertyField(_ballScale);
-            EditorGUILayout.PropertyField(_instanceCount);
+            EditorGUI.indentLevel++;
             EditorGUILayout.PropertyField(_frequency);
             EditorGUILayout.PropertyField(_interval);
+            EditorGUI.indentLevel--;
+            EditorGUILayout.PropertyField(_radius);
+            EditorGUILayout.PropertyField(_ballCount);
+            EditorGUILayout.PropertyField(_ballScale);
+            EditorGUILayout.PropertyField(_color);
 
             serializedObject.ApplyModifiedProperties();
         }

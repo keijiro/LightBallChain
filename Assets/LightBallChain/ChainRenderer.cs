@@ -10,15 +10,15 @@ namespace LightBallChain
         enum MotionType { MonoLissajous, SyncedRandom }
         [SerializeField] MotionType _motionType;
 
-        [SerializeField, ColorUsage(false, true, 0, 8, 0.125f, 3)]
-        Color _color = Color.white;
-
-        [SerializeField] float _radius = 1;
-        [SerializeField] float _ballScale = 1;
-
-        [SerializeField] int _instanceCount = 10;
         [SerializeField] float _frequency = 1;
         [SerializeField] float _interval = 1;
+
+        [SerializeField] float _radius = 1;
+        [SerializeField] int _ballCount = 10;
+        [SerializeField] float _ballScale = 1;
+
+        [SerializeField, ColorUsage(false, true, 0, 8, 0.125f, 3)]
+        Color _color = Color.white;
 
         #endregion
 
@@ -41,12 +41,13 @@ namespace LightBallChain
         Vector4 [] _positions;
         float _time;
 
-        Bounds _bounds = new Bounds(Vector3.zero, Vector3.one * 1000);
+        readonly Bounds _bounds = new Bounds(Vector3.zero, Vector3.one * 1000);
 
         #endregion
 
-        #region Private methods
+        #region Random number generator
 
+        // Hash function from H. Schechter & R. Bridson, goo.gl/RXiKaH
         static uint Hash(uint s)
         {
             s ^= 2747636419u;
@@ -63,11 +64,6 @@ namespace LightBallChain
             return Hash(seed) / 4294967295.0f; // 2^32-1
         }
 
-        static float Random1(uint seed)
-        {
-            return Random01(seed) * 2 - 1;
-        }
-
         static Vector3 RandomPoint(int seed)
         {
             var u = Random01((uint)(seed + 28913)) * Mathf.PI * 2;
@@ -75,6 +71,10 @@ namespace LightBallChain
             var v = Mathf.Sqrt(1 - z * z);
             return new Vector3(Mathf.Cos(u) * v, Mathf.Sin(u) * v, z);
         }
+
+        #endregion
+
+        #region Private methods
 
         void ReleaseComputeBuffers()
         {
@@ -86,9 +86,6 @@ namespace LightBallChain
                 _positionBuffer = null;
                 _drawArgsBuffer = null;
             }
-
-            // To sync the lifetime of _positions to _positionBuffer.
-            _positions = null;
         }
 
         void UpdatePositions()
@@ -103,11 +100,15 @@ namespace LightBallChain
                 _time += _frequency * Time.deltaTime;
         }
 
+        #endregion
+
+        #region Animation functions
+
         void MonoLissajous()
         {
             var t = _time;
 
-            for (var i = 0; i < _instanceCount; i++)
+            for (var i = 0; i < _ballCount; i++)
             {
                 _positions[i] = Quaternion.Euler(
                     58.158f * t, 183.24f * t, 36.442f * t
@@ -119,15 +120,15 @@ namespace LightBallChain
 
         void SyncedRandom()
         {
-            var id = Mathf.FloorToInt(_time) * _instanceCount;
+            var id = Mathf.FloorToInt(_time) * _ballCount;
             var param = (_time - Mathf.Floor(_time));
 
             param = param * param * (3 - 2 * param);
 
-            for (var i = 0; i < _instanceCount; i++)
+            for (var i = 0; i < _ballCount; i++)
             {
                 var p1 = RandomPoint(id + i);
-                var p2 = RandomPoint(id + i + _instanceCount);
+                var p2 = RandomPoint(id + i + _ballCount);
                 _positions[i] = Vector3.Lerp(p1, p2, param);
             }
         }
@@ -138,13 +139,14 @@ namespace LightBallChain
 
         void OnValidate()
         {
+            _ballCount = Mathf.Max(_ballCount, 1);
             _ballScale = Mathf.Max(_ballScale, 0);
-            _instanceCount = Mathf.Max(_instanceCount, 1);
         }
 
         void OnDisable()
         {
-            if (_positionBuffer != null) ReleaseComputeBuffers();
+            // Note: This should be done in OnDisable, not in OnDestroy.
+            ReleaseComputeBuffers();
         }
 
         void OnDestroy()
@@ -166,20 +168,23 @@ namespace LightBallChain
 
         void Update()
         {
-            // To reset the position buffer when the instance count was changed.
-            if (_positions != null && _positions.Length != _instanceCount)
+            // Destroy the internal buffers when the instance count was changed.
+            if (_positions != null && _positions.Length != _ballCount)
+            {
                 ReleaseComputeBuffers();
+                _positions = null;
+            }
 
-            // Lazy initialization of the position buffer and the draw args buffer.
+            // Lazy initialization of the compute buffers.
             if (_positionBuffer == null)
             {
-                _positionBuffer = new ComputeBuffer(_instanceCount, 4 * sizeof(float));
-
+                _positionBuffer = new ComputeBuffer(_ballCount, 4 * sizeof(float));
                 _drawArgsBuffer = new ComputeBuffer(1, 5 * sizeof(uint), ComputeBufferType.IndirectArguments);
-                _drawArgsBuffer.SetData(new uint[5] { _ballMesh.GetIndexCount(0), (uint)_instanceCount, 0, 0, 0 });
-
-                _positions = new Vector4 [_instanceCount];
+                _drawArgsBuffer.SetData(new uint[5] { _ballMesh.GetIndexCount(0), (uint)_ballCount, 0, 0, 0 });
             }
+
+            // Lazy initialization of the position buffer.
+            if (_positions == null) _positions = new Vector4 [_ballCount];
 
             // Update the position buffer.
             UpdatePositions();
@@ -209,15 +214,15 @@ namespace LightBallChain
 
             _ballMaterial.SetFloat("_Scale", _ballScale);
 
-            // Invoke instanced indirect draw of balls.
+            // Draw balls with an instanced indirect draw call.
             Graphics.DrawMeshInstancedIndirect(_ballMesh, 0, _ballMaterial, _bounds, _drawArgsBuffer);
         }
 
         void OnRenderObject()
         {
-            // Invoke procedural draw of lines.
+            // Draw lines with procedural draw.
             _lineMaterial.SetPass(0);
-            Graphics.DrawProcedural(MeshTopology.Lines, 2 * (_instanceCount - 1), 1);
+            Graphics.DrawProcedural(MeshTopology.Lines, 2 * (_ballCount - 1), 1);
         }
 
         #endregion

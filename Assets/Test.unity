@@ -136,12 +136,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _motionType: 1
-  _color: {r: 1, g: 1, b: 1, a: 1}
-  _radius: 1.5
-  _ballScale: 0.2
-  _instanceCount: 18
   _frequency: 1.5
   _interval: 1
+  _radius: 1.5
+  _ballCount: 10
+  _ballScale: 0.2
+  _color: {r: 1, g: 1, b: 1, a: 1}
   _lineShader: {fileID: 4800000, guid: dc155c5ea6358474bbec90df3a33e3fa, type: 3}
   _ballShader: {fileID: 4800000, guid: fc643b925406c08499daaf6162242316, type: 3}
   _ballMesh: {fileID: 4300000, guid: e47d3ee5e5b189245a016180de7ca3e4, type: 3}
