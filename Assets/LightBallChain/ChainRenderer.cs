@@ -223,13 +223,13 @@ namespace LightBallChain
                     // Snap onto the longitude rings.
                     if (snap)
                     {
-                        z /= div;
+                        z *= _multiplier;
                         var iz = Mathf.Floor(z);
                         var fz = z - iz;
-                        z = Mathf.Min(0, (fz - 0.05f) / 0.1f); // ease-in
-                        z = Mathf.Max(z, (fz - 0.95f) / 0.1f); // ease-out
+                        z = Mathf.Min(0, (fz - 0.04f) / 0.08f); // ease-in
+                        z = Mathf.Max(z, (fz - 0.96f) / 0.08f); // ease-out
                         z += iz + 0.5f;
-                        z *= div;
+                        z /= _multiplier;
                     }
 
                     z = 2 * z - 1;              // bottom-to-top linear motion

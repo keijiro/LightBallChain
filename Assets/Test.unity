@@ -138,13 +138,13 @@ MonoBehaviour:
   _motionType: 5
   _speed: 0.3
   _interval: 0.078
-  _multiplier: 9.86
+  _multiplier: 9
   _randomSeed: 0
   _modSpeed: 4
   _modMultiplier: 3
   _modAmplitude: 0.3
   _radius: 1.5
-  _ballCount: 123
+  _ballCount: 110
   _ballScale: 0.2
   _color: {r: 1, g: 1, b: 1, a: 1}
   _lineShader: {fileID: 4800000, guid: dc155c5ea6358474bbec90df3a33e3fa, type: 3}
