@@ -11,7 +11,7 @@ namespace LightBallChain
         enum MotionType {
             SyncedRandom, OrderedRandom,
             MonoLissajous, MultiLissajous,
-            LongitudeScan, LongitudeRings
+            SpiralScan, SpiralRings
         }
         [SerializeField] MotionType _motionType;
 
@@ -129,8 +129,8 @@ namespace LightBallChain
                 case MotionType.OrderedRandom: OrderedRandom(); break;
                 case MotionType.MonoLissajous: MonoLissajous(); break;
                 case MotionType.MultiLissajous: MultiLissajous(); break;
-                case MotionType.LongitudeScan: Longitude(false); break;
-                case MotionType.LongitudeRings: Longitude(true); break;
+                case MotionType.SpiralScan: Spiral(false); break;
+                case MotionType.SpiralRings: Spiral(true); break;
             }
 
             if (Application.isPlaying && !_underTimeControl)
@@ -202,7 +202,7 @@ namespace LightBallChain
         // Move from the bottom to the top with spiral motion, then return to
         // the bottom with smoothstep. The duration of the return period is
         // determined by 0.5 / (0.5 + _multiplider).
-        void Longitude(bool snap)
+        void Spiral(bool snap)
         {
             float div = 1.0f / (_multiplier + 0.5f);
 
