@@ -11,7 +11,7 @@ namespace LightBallChain
         enum MotionType {
             SyncedRandom, OrderedRandom,
             MonoLissajous, MultiLissajous,
-            Longitude
+            LongitudeScan, LongitudeRings
         }
         [SerializeField] MotionType _motionType;
 
@@ -19,6 +19,10 @@ namespace LightBallChain
         [SerializeField] float _interval = 1;
         [SerializeField] float _multiplier = 1;
         [SerializeField] int _randomSeed = 0;
+
+        [SerializeField] float _modSpeed = 4;
+        [SerializeField] float _modMultiplier = 10;
+        [SerializeField] float _modAmplitude = 0.3f;
 
         [SerializeField] float _radius = 1;
         [SerializeField] int _ballCount = 10;
@@ -125,7 +129,8 @@ namespace LightBallChain
                 case MotionType.OrderedRandom: OrderedRandom(); break;
                 case MotionType.MonoLissajous: MonoLissajous(); break;
                 case MotionType.MultiLissajous: MultiLissajous(); break;
-                case MotionType.Longitude: Longitude(); break;
+                case MotionType.LongitudeScan: Longitude(false); break;
+                case MotionType.LongitudeRings: Longitude(true); break;
             }
 
             if (Application.isPlaying && !_underTimeControl)
@@ -148,7 +153,7 @@ namespace LightBallChain
             {
                 var p1 = RandomPointOnSphere(seed + i);
                 var p2 = RandomPointOnSphere(seed + i + _ballCount);
-                _positions[i] = Vector3.Lerp(p1, p2, param);
+                _positions[i] = ApplyModifier(Vector3.Lerp(p1, p2, param));
             }
         }
 
@@ -163,7 +168,7 @@ namespace LightBallChain
 
                 var p1 = RandomPointOnSphere(seed + i);
                 var p2 = RandomPointOnSphere(seed + i + _ballCount);
-                _positions[i] = Vector3.Lerp(p1, p2, param);
+                _positions[i] = ApplyModifier(Vector3.Lerp(p1, p2, param));
 
                 t += 1.0f / _ballCount;
             }
@@ -176,7 +181,8 @@ namespace LightBallChain
 
             for (var i = 0; i < _ballCount; i++)
             {
-                _positions[i] = Quaternion.Euler(av * t) * Vector3.up;
+                var p = Quaternion.Euler(av * t) * Vector3.up;
+                _positions[i] = ApplyModifier(p);
                 t += _interval;
             }
         }
@@ -188,39 +194,68 @@ namespace LightBallChain
             for (var i = 0; i < _ballCount; i++)
             {
                 var av = RandomPointInCube(_randomSeed + i * 371) * 180;
-                _positions[i] = Quaternion.Euler(av * t) * Vector3.up;
+                var p = Quaternion.Euler(av * t) * Vector3.up;
+                _positions[i] = ApplyModifier(p);
             }
         }
 
-        void Longitude()
+        // Move from the bottom to the top with spiral motion, then return to
+        // the bottom with smoothstep. The duration of the return period is
+        // determined by 0.5 / (0.5 + _multiplider).
+        void Longitude(bool snap)
         {
-            var t = _time;
+            float div = 1.0f / (_multiplier + 0.5f);
+
+            var t = _time * _speed;
 
             for (var i = 0; i < _ballCount; i++)
             {
-                var t1 = (t * _speed) % 1;
-                var t2 = t * _speed * _multiplier * Mathf.PI * 2;
+                var t1 = t * div % 1;      // latitude
+                var t2 = t * Mathf.PI * 2; // longitude
 
-                float y, xz;
-                if (t1 < 0.1f)
+                float xy, z;
+
+                if (t1 < 1 - 0.5f * div)
                 {
-                    y = 1 - SmoothStep01(t1 * 10) * 2;
-                    xz = 0;
+                    // Spiral motion
+                    z = t1 / (1 - 0.5f * div);
+
+                    // Snap onto the longitude rings.
+                    if (snap)
+                    {
+                        z /= div;
+                        var iz = Mathf.Floor(z);
+                        var fz = z - iz;
+                        z = Mathf.Min(0, (fz - 0.05f) / 0.1f); // ease-in
+                        z = Mathf.Max(z, (fz - 0.95f) / 0.1f); // ease-out
+                        z += iz + 0.5f;
+                        z *= div;
+                    }
+
+                    z = 2 * z - 1;              // bottom-to-top linear motion
+                    xy = Mathf.Sqrt(1 - z * z); // fit it to the unit sphere
                 }
                 else
                 {
-                    y = (t1 - 0.1f) / 0.9f * 2 - 1;
-                    xz = Mathf.Sqrt(1 - y * y);
+                    // Top-to-bottom return motion
+                    z = (t1 - 1 + 0.5f * div) / (0.5f * div);
+                    z = 1 - SmoothStep01(z) * 2;
+                    xy = 0;
                 }
 
-                _positions[i] = new Vector3(
-                    Mathf.Cos(t2) * xz,
-                    y,
-                    Mathf.Sin(t2) * xz
-                );
+                // Calculate the position and apply the modifier.
+                var p = new Vector3(Mathf.Cos(t2) * xy, Mathf.Sin(t2) * xy, z);
+                _positions[i] = ApplyModifier(p);
 
                 t += _interval;
             }
+        }
+
+        Vector3 ApplyModifier(Vector3 v)
+        {
+            var t = v.z * _modMultiplier + _time * _modSpeed;
+            var s = 1.0f + Mathf.Sin(t) * _modAmplitude;
+            return new Vector3(v.x * s, v.y * s, v.z);
         }
 
         #endregion
