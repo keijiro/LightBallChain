@@ -8,8 +8,10 @@ namespace LightBallChain
     public class ChainRendererEditor : Editor
     {
         SerializedProperty _motionType;
-        SerializedProperty _frequency;
+        SerializedProperty _speed;
         SerializedProperty _interval;
+        SerializedProperty _multiplier;
+        SerializedProperty _randomSeed;
 
         SerializedProperty _radius;
         SerializedProperty _ballCount;
@@ -19,8 +21,10 @@ namespace LightBallChain
         void OnEnable()
         {
             _motionType = serializedObject.FindProperty("_motionType");
-            _frequency = serializedObject.FindProperty("_frequency");
+            _speed = serializedObject.FindProperty("_speed");
             _interval = serializedObject.FindProperty("_interval");
+            _multiplier = serializedObject.FindProperty("_multiplier");
+            _randomSeed = serializedObject.FindProperty("_randomSeed");
 
             _radius = serializedObject.FindProperty("_radius");
             _ballCount = serializedObject.FindProperty("_ballCount");
@@ -34,8 +38,10 @@ namespace LightBallChain
 
             EditorGUILayout.PropertyField(_motionType);
             EditorGUI.indentLevel++;
-            EditorGUILayout.PropertyField(_frequency);
+            EditorGUILayout.PropertyField(_speed);
             EditorGUILayout.PropertyField(_interval);
+            EditorGUILayout.PropertyField(_multiplier);
+            EditorGUILayout.PropertyField(_randomSeed);
             EditorGUI.indentLevel--;
             EditorGUILayout.PropertyField(_radius);
             EditorGUILayout.PropertyField(_ballCount);

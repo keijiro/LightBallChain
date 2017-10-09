@@ -8,11 +8,17 @@ namespace LightBallChain
     {
         #region Editable attributes
 
-        enum MotionType { MonoLissajous, SyncedRandom }
+        enum MotionType {
+            SyncedRandom, OrderedRandom,
+            MonoLissajous, MultiLissajous,
+            Longitude
+        }
         [SerializeField] MotionType _motionType;
 
-        [SerializeField] float _frequency = 1;
+        [SerializeField] float _speed = 1;
         [SerializeField] float _interval = 1;
+        [SerializeField] float _multiplier = 1;
+        [SerializeField] int _randomSeed = 0;
 
         [SerializeField] float _radius = 1;
         [SerializeField] int _ballCount = 10;
@@ -48,7 +54,7 @@ namespace LightBallChain
 
         #endregion
 
-        #region Random number generator
+        #region Local math functions
 
         // Hash function from H. Schechter & R. Bridson, goo.gl/RXiKaH
         static uint Hash(uint s)
@@ -67,12 +73,32 @@ namespace LightBallChain
             return Hash(seed) / 4294967295.0f; // 2^32-1
         }
 
-        static Vector3 RandomPoint(int seed)
+        static float Random1(uint seed)
+        {
+            return Random01(seed) * 2 - 1;
+        }
+
+        static Vector3 RandomPointInCube(int seed)
+        {
+            return new Vector3(
+                Random1((uint)(seed + 382943)),
+                Random1((uint)(seed + 193893)),
+                Random1((uint)(seed + 542194))
+            );
+        }
+
+        static Vector3 RandomPointOnSphere(int seed)
         {
             var u = Random01((uint)(seed + 28913)) * Mathf.PI * 2;
             var z = Random01((uint)(seed + 92877)) * 2 - 1;
             var v = Mathf.Sqrt(1 - z * z);
             return new Vector3(Mathf.Cos(u) * v, Mathf.Sin(u) * v, z);
+        }
+
+        static float SmoothStep01(float x)
+        {
+            x = Mathf.Clamp01(x);
+            return x * x * (3 - 2 * x);
         }
 
         #endregion
@@ -95,12 +121,15 @@ namespace LightBallChain
         {
             switch (_motionType)
             {
-                case MotionType.MonoLissajous: MonoLissajous(); break;
                 case MotionType.SyncedRandom: SyncedRandom(); break;
+                case MotionType.OrderedRandom: OrderedRandom(); break;
+                case MotionType.MonoLissajous: MonoLissajous(); break;
+                case MotionType.MultiLissajous: MultiLissajous(); break;
+                case MotionType.Longitude: Longitude(); break;
             }
 
             if (Application.isPlaying && !_underTimeControl)
-                _time += _frequency * Time.deltaTime;
+                _time += Time.deltaTime;
             else
                 _time = 0;
         }
@@ -109,32 +138,88 @@ namespace LightBallChain
 
         #region Animation functions
 
+        void SyncedRandom()
+        {
+            var t = _time * _speed;
+            var seed = _randomSeed + Mathf.FloorToInt(t) * _ballCount;
+            var param = SmoothStep01(t - Mathf.Floor(t));
+
+            for (var i = 0; i < _ballCount; i++)
+            {
+                var p1 = RandomPointOnSphere(seed + i);
+                var p2 = RandomPointOnSphere(seed + i + _ballCount);
+                _positions[i] = Vector3.Lerp(p1, p2, param);
+            }
+        }
+
+        void OrderedRandom()
+        {
+            var t = _time * _speed;
+
+            for (var i = 0; i < _ballCount; i++)
+            {
+                var seed = _randomSeed + Mathf.FloorToInt(t) * _ballCount;
+                var param = SmoothStep01(t - Mathf.Floor(t));
+
+                var p1 = RandomPointOnSphere(seed + i);
+                var p2 = RandomPointOnSphere(seed + i + _ballCount);
+                _positions[i] = Vector3.Lerp(p1, p2, param);
+
+                t += 1.0f / _ballCount;
+            }
+        }
+
         void MonoLissajous()
+        {
+            var t = _time * _speed;
+            var av = RandomPointInCube(_randomSeed) * 180;
+
+            for (var i = 0; i < _ballCount; i++)
+            {
+                _positions[i] = Quaternion.Euler(av * t) * Vector3.up;
+                t += _interval;
+            }
+        }
+
+        void MultiLissajous()
+        {
+            var t = _time * _speed;
+
+            for (var i = 0; i < _ballCount; i++)
+            {
+                var av = RandomPointInCube(_randomSeed + i * 371) * 180;
+                _positions[i] = Quaternion.Euler(av * t) * Vector3.up;
+            }
+        }
+
+        void Longitude()
         {
             var t = _time;
 
             for (var i = 0; i < _ballCount; i++)
             {
-                _positions[i] = Quaternion.Euler(
-                    58.158f * t, 183.24f * t, 36.442f * t
-                ) * Vector3.up;
+                var t1 = (t * _speed) % 1;
+                var t2 = t * _speed * _multiplier * Mathf.PI * 2;
+
+                float y, xz;
+                if (t1 < 0.1f)
+                {
+                    y = 1 - SmoothStep01(t1 * 10) * 2;
+                    xz = 0;
+                }
+                else
+                {
+                    y = (t1 - 0.1f) / 0.9f * 2 - 1;
+                    xz = Mathf.Sqrt(1 - y * y);
+                }
+
+                _positions[i] = new Vector3(
+                    Mathf.Cos(t2) * xz,
+                    y,
+                    Mathf.Sin(t2) * xz
+                );
 
                 t += _interval;
-            }
-        }
-
-        void SyncedRandom()
-        {
-            var id = Mathf.FloorToInt(_time) * _ballCount;
-            var param = (_time - Mathf.Floor(_time));
-
-            param = param * param * (3 - 2 * param);
-
-            for (var i = 0; i < _ballCount; i++)
-            {
-                var p1 = RandomPoint(id + i);
-                var p2 = RandomPoint(id + i + _ballCount);
-                _positions[i] = Vector3.Lerp(p1, p2, param);
             }
         }
 

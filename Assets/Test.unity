@@ -135,11 +135,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 56c2a735df80bcf448cb499e7569cebb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _motionType: 1
-  _frequency: 1.5
-  _interval: 1
+  _motionType: 4
+  _speed: 0.124
+  _interval: 0.19
+  _multiplier: 4.384
+  _randomSeed: 0
   _radius: 1.5
-  _ballCount: 17
+  _ballCount: 32
   _ballScale: 0.2
   _color: {r: 1, g: 1, b: 1, a: 1}
   _lineShader: {fileID: 4800000, guid: dc155c5ea6358474bbec90df3a33e3fa, type: 3}
@@ -264,7 +266,7 @@ Camera:
     height: 1
   near clip plane: 0.3
   far clip plane: 100
-  field of view: 20
+  field of view: 45
   orthographic: 0
   orthographic size: 5
   m_Depth: -1
@@ -289,7 +291,7 @@ Transform:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1709789438}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -10}
+  m_LocalPosition: {x: 0, y: 0, z: -4}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
